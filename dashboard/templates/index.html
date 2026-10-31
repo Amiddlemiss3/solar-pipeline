@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solar Dashboard</title>
+  <script src="/static/plotly.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #0f1117; color: #eee; padding: 1.5rem; }
+    h1   { color: #f4a020; margin-bottom: 1.5rem; font-size: 1.6rem; }
+    h2   { color: #f4a020; margin: 2rem 0 1rem; font-size: 1.1rem;
+           text-transform: uppercase; letter-spacing: 0.05em; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem; margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: #1c1f2a; border-radius: 10px; padding: 1rem;
+      text-align: center; border: 1px solid #2a2d3a;
+    }
+    .stat-card .value { font-size: 1.8rem; font-weight: 700; color: #f4a020; }
+    .stat-card .label { font-size: 0.75rem; color: #888; margin-top: 0.3rem; }
+    .chart { background: #1c1f2a; border-radius: 10px; padding: 0rem;
+             margin-bottom: 1.5rem; border: 1px solid #2a2d3a; min-height: 400px; }
+    .date-picker-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+    select {
+      background: #1c1f2a; color: #eee; border: 1px solid #2a2d3a;
+      border-radius: 6px; padding: 0.4rem 0.8rem; font-size: 0.9rem; cursor: pointer;
+    }
+    button {
+      background: #f4a020; color: #0f1117; border: none; border-radius: 6px;
+      padding: 0.4rem 1rem; font-weight: 600; cursor: pointer;
+    }
+    button:hover { background: #e05c00; }
+  </style>
+</head>
+<body>
+  <h1>☀️ Solar Dashboard</h1>
+
+  <!-- ── Summary stats ── -->
+  <h2>Summary</h2>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="value">{{ stats.latest_kwh }}</div>
+      <div class="label">kWh — {{ stats.latest_date }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">{{ stats.latest_mins }}</div>
+      <div class="label">Minutes generating</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">{{ stats.total_kwh }}</div>
+      <div class="label">Total kWh (all time)</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">{{ stats.avg_kwh }}</div>
+      <div class="label">Average daily kWh</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">{{ stats.best_day_kwh }}</div>
+      <div class="label">Best day ({{ stats.best_day_date }})</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">{{ stats.total_days }}</div>
+      <div class="label">Days on record</div>
+    </div>
+  </div>
+
+  <!-- ── Daily charts ── -->
+  <h2>Daily Overview</h2>
+  <div class="chart" id="daily_bar"></div>
+  <div class="chart" id="monthly_bar"></div>
+  <div class="chart" id="rolling"></div>
+
+  <!-- ── Intraday chart ── -->
+  <h2>Intraday Detail</h2>
+  <div class="date-picker-row">
+    <form method="get" action="/" style="display:flex; gap:0.75rem; align-items:center;">
+      <select name="date">
+        {% for d in available_dates %}
+          <option value="{{ d }}" {% if d == selected_date %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit">View day</button>
+    </form>
+  </div>
+
+  {% if intraday_chart %}
+  <div class="chart" id="intraday"></div>
+  {% endif %}
+
+  <script>
+    const layout_override = {
+      paper_bgcolor: "#1c1f2a",
+      plot_bgcolor:  "#1c1f2a",
+      font: { color: "#cccccc" }
+    };
+
+    const daily_charts = {{ daily_charts | tojson }};
+    for (const [id, fig] of Object.entries(daily_charts)) {
+      Plotly.newPlot(id, fig.data, {...fig.layout, ...layout_override}, {responsive: true});
+    }
+
+    {% if intraday_chart %}
+    const intraday = {{ intraday_chart | tojson }};
+    Plotly.newPlot("intraday", intraday.data, {...intraday.layout, ...layout_override}, {responsive: true});
+    {% endif %}
+  </script>
+</body>
+</html>
