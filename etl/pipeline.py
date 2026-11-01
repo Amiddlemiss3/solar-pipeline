@@ -10,11 +10,14 @@ from typing import Optional, cast
 from dotenv import load_dotenv
 
 def main():
+    """Main function to run the ETL pipeline."""
     # Load environment variables from .env file
     load_dotenv()
-    inverter_ip = os.environ.get("INVERTER_IP")
-    pipeline_log = os.environ.get("PIPELINE_LOG_PATH")
-    db_path = os.environ.get("DB_PATH")
+    inverter_ip = os.environ["INVERTER_IP"]
+    pipeline_log = os.environ["PIPELINE_LOG_PATH"]
+    db_path = os.environ["DB_PATH"]
+    if db_path is None:
+        raise ValueError("DB_PATH environment variable is not set.")
 
     # Set up logging
     logging.basicConfig(
@@ -31,11 +34,11 @@ def main():
     daily_url = f"http://{inverter_ip}/log_daily.csv"
     five_min_url = f"http://{inverter_ip}/log_5min.csv"
 
-    """Main function to run the ETL pipeline."""
+    # Start the update process
     logging.info("Starting solar panel data update script.")
-    update_solar_panel_db(daily_url, "daily_data")
+    update_solar_panel_db(daily_url, "daily_data", db_path)
     time_module.sleep(3)  # brief pause to avoid overloading the inverter's web server
-    update_solar_panel_db(five_min_url, "five_min_data")
+    update_solar_panel_db(five_min_url, "five_min_data", db_path)
 
 def _prepare_daily(df: pd.DataFrame) -> pd.DataFrame:
     """Rename and return columns for the daily_data table."""
@@ -104,7 +107,7 @@ TABLE_CONFIG: dict[str, dict[str, object]] = {
 }
 
 
-def update_solar_panel_db(url: str, table_name: str) -> None:
+def update_solar_panel_db(url: str, table_name: str, db_path: str) -> None:
     if table_name not in TABLE_CONFIG:
         raise ValueError(f"Unknown table_name '{table_name}'. Valid options: {list(TABLE_CONFIG)}")
 
