@@ -9,26 +9,33 @@ from datetime import date, time
 from typing import Optional, cast
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
-inverter_ip = os.environ.get("INVERTER_IP")
-pipeline_log = os.environ.get("PIPELINE_LOG_PATH")
-db_path = os.environ.get("DB_PATH")
+def main():
+    # Load environment variables from .env file
+    load_dotenv()
+    inverter_ip = os.environ.get("INVERTER_IP")
+    pipeline_log = os.environ.get("PIPELINE_LOG_PATH")
+    db_path = os.environ.get("DB_PATH")
 
-# Set up logging
-logging.basicConfig(
-     filename=pipeline_log,
-     encoding="utf-8",
-     filemode="a",
-     format="{asctime} - {levelname} - {message}",
-     style="{",
-     datefmt="%Y-%m-%d %H:%M",
-     level=logging.INFO,
-)
+    # Set up logging
+    logging.basicConfig(
+        filename=pipeline_log,
+        encoding="utf-8",
+        filemode="a",
+        format="{asctime} - {levelname} - {message}",
+        style="{",
+        datefmt="%Y-%m-%d %H:%M",
+        level=logging.INFO,
+    )
 
-# Define URLs for fetching data from inverter
-daily_url = f"http://{inverter_ip}/log_daily.csv"
-five_min_url = f"http://{inverter_ip}/log_5min.csv"
+    # Define URLs for fetching data from inverter
+    daily_url = f"http://{inverter_ip}/log_daily.csv"
+    five_min_url = f"http://{inverter_ip}/log_5min.csv"
+
+    """Main function to run the ETL pipeline."""
+    logging.info("Starting solar panel data update script.")
+    update_solar_panel_db(daily_url, "daily_data")
+    time_module.sleep(3)  # brief pause to avoid overloading the inverter's web server
+    update_solar_panel_db(five_min_url, "five_min_data")
 
 def _prepare_daily(df: pd.DataFrame) -> pd.DataFrame:
     """Rename and return columns for the daily_data table."""
@@ -182,7 +189,4 @@ def update_solar_panel_db(url: str, table_name: str) -> None:
 
 
 if __name__ == "__main__":
-    logging.info("Starting solar panel data update script.")
-    update_solar_panel_db(daily_url, "daily_data")
-    time_module.sleep(3)  # brief pause to avoid overloading the inverter's web server
-    update_solar_panel_db(five_min_url, "five_min_data")
+    main()
