@@ -16,8 +16,6 @@ def main():
     inverter_ip = os.environ["INVERTER_IP"]
     pipeline_log = os.environ["PIPELINE_LOG_PATH"]
     db_path = os.environ["DB_PATH"]
-    if db_path is None:
-        raise ValueError("DB_PATH environment variable is not set.")
 
     # Set up logging
     logging.basicConfig(
@@ -54,6 +52,8 @@ def _prepare_five_min(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df[['Date', 'Time']] = df['Date/Time'].str.split(' ', expand=True)
     df = df[['Date', 'Time', 'Inverter Generation']]
+    # test new datetime columns for parseability, and drop any rows that fail to parse
+    df['Timestamp'] = pd.to_datetime(df['Date/Time'], format="%Y-%m-%d %H:%M:%S", errors='raise')
     return df.rename(columns={
         df.columns[0]: 'Date',
         df.columns[1]: 'Time',
