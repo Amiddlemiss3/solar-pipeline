@@ -53,7 +53,7 @@ def _prepare_five_min(df: pd.DataFrame) -> pd.DataFrame:
     df[['Date', 'Time']] = df['Date/Time'].str.split(' ', expand=True)
     df = df[['Date', 'Time', 'Inverter Generation']]
     # test new datetime columns for parseability, and drop any rows that fail to parse
-    df['Timestamp'] = pd.to_datetime(df['Date/Time'], format="%Y-%m-%d %H:%M:%S", errors='raise')
+    #df['Timestamp'] = pd.to_datetime(df['Date/Time'], format="%Y-%m-%d %H:%M:%S", errors='raise')
     return df.rename(columns={
         df.columns[0]: 'Date',
         df.columns[1]: 'Time',
