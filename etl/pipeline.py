@@ -50,10 +50,11 @@ def _prepare_daily(df: pd.DataFrame) -> pd.DataFrame:
 def _prepare_five_min(df: pd.DataFrame) -> pd.DataFrame:
     """Split Date/Time column and rename for the five_min_data table."""
     df = df.copy()
-    df[['Date', 'Time']] = df['Date/Time'].str.split(' ', expand=True)
+    # test new datetime columns for parseability, and raise errors for any that fail to parse
+    df['Timestamp'] = pd.to_datetime(df['Date/Time'], errors='raise', format="%Y-%m-%d %H:%M:%S")
+    df['Date'] = df['Timestamp'].dt.date
+    df['Time'] = df['Timestamp'].dt.time
     df = df[['Date', 'Time', 'Inverter Generation']]
-    # test new datetime columns for parseability, and drop any rows that fail to parse
-    #df['Timestamp'] = pd.to_datetime(df['Date/Time'], format="%Y-%m-%d %H:%M:%S", errors='raise')
     return df.rename(columns={
         df.columns[0]: 'Date',
         df.columns[1]: 'Time',
@@ -71,8 +72,6 @@ def _filter_daily(df: pd.DataFrame, ref_date: Optional[date], _ref_time: Optiona
 def _filter_five_min(df: pd.DataFrame, ref_date: Optional[date], ref_time: Optional[time]) -> pd.DataFrame:
     """Return only rows with Date/Time strictly after ref_date/ref_time."""
     df = df.copy()
-    df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.date
-    df['Time'] = pd.to_datetime(df['Time'], errors='coerce', format="%H:%M:%S").dt.time
     mask: pd.Series = (df['Date'] > ref_date) | ((df['Date'] == ref_date) & (df['Time'] > ref_time))
     return df[mask]
 
