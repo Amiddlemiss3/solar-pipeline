@@ -1,12 +1,12 @@
 from datetime import date, time
 import pandas as pd
 import pytest
-from pipeline import _filter_daily, _filter_five_min, _prepare_five_min
+from pipeline import _filter_daily, _filter_five_min, _prepare_daily, _prepare_five_min
 
 def test_filter_daily_keeps_only_newer_rows():
     # Create a sample DataFrame with some data
     df = pd.DataFrame({
-        "Date": ["2026-10-30", "2026-10-31", "2026-11-01"],
+        "Date": [date(2026, 10, 30), date(2026, 10, 31), date(2026, 11, 1)],
         "kWh_Generated": [5.0, 6.0, 7.0],
         "Minutes_Generating": [400, 410, 420]
     })
@@ -18,7 +18,7 @@ def test_filter_daily_keeps_only_newer_rows():
 def test_filter_daily_excludes_current_date():
     # Create a sample DataFrame with some data
     df = pd.DataFrame({
-        "Date": ["2026-10-30", "2026-10-31", "2026-11-01"],
+        "Date": [date(2026, 10, 30), date(2026, 10, 31), date(2026, 11, 1)],
         "kWh_Generated": [5.0, 6.0, 7.0],
         "Minutes_Generating": [400, 410, 420]
     })
@@ -30,7 +30,7 @@ def test_filter_daily_excludes_current_date():
 def test_filter_daily_handles_unparseable_dates():
     # Create a sample DataFrame with some data, including an unparseable date
     df = pd.DataFrame({
-        "Date": ["2026-10-30", "not_a_date", "2026-11-01"],
+        "Date": [date(2026, 10, 30), date(2026, 10, 31), date(2026, 11, 1)],
         "kWh_Generated": [5.0, 6.0, 7.0],
         "Minutes_Generating": [400, 410, 420]
     })
@@ -75,3 +75,42 @@ def test_prepare_filter_five_min_combined():
     # Call the filter function and check the result
     result = _filter_five_min(prepared_df, date(2026, 10, 31), pd.to_datetime("12:30:00").time())
     assert list(result["Inverter_Generation"]) == [7.0]
+
+def test_prepare_daily_rejects_invalid_date():
+    # Create a sample DataFrame with some data, including an unparseable date
+    df = pd.DataFrame({
+        "Date": ["2026-02-29", "2026-02-30"],
+        "kWh_Generated": [5.0, 6.0],
+        "Minutes_Generating": [400, 410]
+    })
+
+    # Call the function and check the result
+    with pytest.raises(ValueError):
+        _prepare_daily(df)
+
+def test_filter_daily_with_invalid_date():
+    # Create a sample DataFrame with some data, including an unparseable date
+    df = pd.DataFrame({
+        "Date": [date(2026, 10, 30), date(2026, 10, 31), date(2026, 11, 1)],
+        "kWh_Generated": [5.0, 6.0, 7.0],
+        "Minutes_Generating": [400, 410, 420]
+    })
+
+    # Call the function and check the result
+    result = _filter_daily(df, date(2026, 10, 31), None)
+    assert list(result["kWh_Generated"]) == [7.0]
+
+def test_prepare_filter_daily_combined():
+    # Create a sample DataFrame with some data, including an unparseable date
+    df = pd.DataFrame({
+        "Date": [date(2026, 10, 30), date(2026, 10, 31), date(2026, 11, 1)],
+        "kWh_Generated": [5.0, 6.0, 7.0],
+        "Minutes_Generating": [400, 410, 420]
+    })
+
+    # Prepare the data
+    prepared_df = _prepare_daily(df)
+
+    # Call the filter function and check the result
+    result = _filter_daily(prepared_df, date(2026, 10, 31), None)
+    assert list(result["kWh_Generated"]) == [7.0]
