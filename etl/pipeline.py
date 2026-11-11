@@ -40,11 +40,14 @@ def main():
 
 def _prepare_daily(df: pd.DataFrame) -> pd.DataFrame:
     """Rename and return columns for the daily_data table."""
-    return df.rename(columns={
+    df = df.rename(columns={
         df.columns[0]: 'Date',
         df.columns[1]: 'kWh_Generated',
         df.columns[2]: 'Minutes_Generating',
     })
+    # Convert the 'Date' column to datetime.date objects
+    df['Date'] = pd.to_datetime(df['Date'], format="%Y-%m-%d").dt.date
+    return df
 
 
 def _prepare_five_min(df: pd.DataFrame) -> pd.DataFrame:
@@ -64,8 +67,6 @@ def _prepare_five_min(df: pd.DataFrame) -> pd.DataFrame:
 
 def _filter_daily(df: pd.DataFrame, ref_date: Optional[date], _ref_time: Optional[time]) -> pd.DataFrame:
     """Return only rows with Date strictly after ref_date."""
-    df = df.copy()
-    df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.date
     return df[df['Date'] > ref_date]
 
 
