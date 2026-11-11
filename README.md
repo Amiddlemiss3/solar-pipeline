@@ -114,4 +114,7 @@ Upcoming improvements:
 * Add CI with GitHub Actions to run the tests on every push, and expand test coverage
 * Dashboard improvements:
     * Manual update of data from within the dashboard
+    * YTD generation tile
+    * Daily generation average on intraday chart
 * **dbt transformation layer:** move the dashboard's aggregations (daily and monthly totals, year-to-date generation, best day, estimated earnings) out of Python and into dbt models running on DuckDB via `dbt-duckdb`, with data tests on the raw and staging tables. At this scale the transformations are simple, so this is mainly to learn dbt and to give the project a clearer separation between ingestion and transformation, tested SQL models and generated documentation.
+* Connect dashboard to Octopus Agile API to track home energy usage alongside solar generation
